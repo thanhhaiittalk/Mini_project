@@ -1,6 +1,6 @@
 # Add the source files in this directory
 set(SRC_FILES
-    log.c
+    log.cpp
 )
 
 # Create a library from these files

@@ -6,6 +6,7 @@ add_definitions(-DDEBUG)
 
 # Set toolchain
 set(CMAKE_C_COMPILER ${CMAKE_SOURCE_DIR}/toolchain/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc)
+set(CMAKE_CXX_COMPILER ${CMAKE_SOURCE_DIR}/toolchain/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++)
 
 # Include directories
 include_directories(
@@ -20,6 +21,6 @@ add_subdirectory(src/log)
 add_subdirectory(src/sensor)
 
 # Create the executable for 2 processes
-add_executable(communication src/communication/communication.c)
-add_executable(sensor src/sensor/sensor.c)
-add_executable(log src/log/log.c)
+add_executable(communication src/communication/communication.cpp)
+add_executable(sensor src/sensor/sensor.cpp)
+add_executable(log src/log/log.cpp)
