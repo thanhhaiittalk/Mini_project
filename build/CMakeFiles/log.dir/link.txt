@@ -1,1 +1,0 @@
-/home/hai/Developer/Mini_project/toolchain/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc -O3 -DNDEBUG   CMakeFiles/log.dir/src/log/log.c.o  -o log 

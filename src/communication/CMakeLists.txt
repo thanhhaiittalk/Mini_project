@@ -1,6 +1,6 @@
 # Add the source files in this directory
 set(SRC_FILES
-    communication.c
+    communication.cpp
 )
 
 # Create a library from these files

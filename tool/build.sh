@@ -38,7 +38,6 @@ fi
 
 # export CC=$PRJ_PATH/toolchain/cc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc
 # export CXX=$PRJ_PATH/toolchain/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++
-
 # Perform make
 if [ $MY_OPTION == 1 ]
 then
