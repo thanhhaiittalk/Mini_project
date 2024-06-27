@@ -21,6 +21,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/src/log
     ${CMAKE_SOURCE_DIR}/src/sensor
     ${CMAKE_SOURCE_DIR}/src/setup
+    ${CMAKE_SOURCE_DIR}/src/exit
     ${CMAKE_SOURCE_DIR}/lib/mp_shared_memory
 )
 
@@ -29,6 +30,7 @@ add_subdirectory(src/communication)
 add_subdirectory(src/log)
 add_subdirectory(src/sensor)
 add_subdirectory(src/setup)
+add_subdirectory(src/exit)
 add_subdirectory(lib/mp_shared_memory)
 
 # Create the executable for 2 processes
@@ -36,6 +38,7 @@ add_executable(communication src/communication/communication.cpp)
 add_executable(sensor src/sensor/sensor.cpp)
 add_executable(log src/log/log.cpp)
 add_executable(setup src/setup/setup.cpp)
+add_executable(exit src/exit/exit.cpp)
 
 # Link libraries
 target_link_libraries(communication PUBLIC pthread rt mp_shared_memory_lib setup_lib)
@@ -43,4 +46,5 @@ target_link_libraries(sensor PUBLIC pthread rt mp_shared_memory_lib setup_lib)
 target_link_libraries(log PUBLIC pthread rt mp_shared_memory_lib setup_lib)
 target_link_libraries(setup PUBLIC rt setup_lib)
 target_link_libraries(setup PUBLIC mp_shared_memory_lib setup_lib) 
+target_link_libraries(exit PUBLIC pthread rt mp_shared_memory_lib setup_lib)
 

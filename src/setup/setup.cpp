@@ -104,5 +104,6 @@ int main() {
     // Setup Program
     setupProgram();
 
+    std::cout <<"Complete setup"<<std::endl;
     return 0;
 }
