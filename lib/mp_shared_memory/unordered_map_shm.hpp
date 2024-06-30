@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include <semaphore.h>
 #include "mp_shared_memory_object.hpp"
 
 #define WRITE_PTR       "write_ptr"
@@ -40,6 +41,7 @@ private:
     MPSharedMemoryObject shm;
     int size;
     void* shmPtr;
+    sem_t* sem;
     
 };
 

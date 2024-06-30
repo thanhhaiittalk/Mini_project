@@ -19,6 +19,7 @@ int main()
   }
   while (1)
   {
+    mapShm.write((char*)"TEST_LOG",1234);
     sleep(2);
   }
   return 0;

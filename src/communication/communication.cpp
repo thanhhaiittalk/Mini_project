@@ -15,6 +15,8 @@ int main() {
     UnorderedMapShm mapShm(shmObj,MINI_PROJECT_SHM_SIZE,O_CREAT | O_RDWR);
     mapShm.write((char*)"COMMUNICATION_PID",getpid());
     while (1) {
+        cout<<"Communication is running"<< getpid() <<endl;
+        mapShm.write((char*)"TEST_COMMUNICATION",1234);
         sleep(2);
     }
     return 0;

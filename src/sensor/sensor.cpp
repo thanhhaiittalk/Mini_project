@@ -42,6 +42,7 @@ int main()
     {
       std::cout << "LOG_PID = " << logPID << std::endl;
     }
+    mapShm.write((char*)"TEST_SENSOR",1234);
     sleep(2);
   }
   return 0;
