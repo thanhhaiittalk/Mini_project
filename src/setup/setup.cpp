@@ -11,9 +11,15 @@
 #include "mp_shared_memory_object.hpp"
 #include "unordered_map_shm.hpp"
 
+// Public variable
+int sensorPID, comPID, logPID;
+
 void executeProgram(const char *program, char *const args[]);
 void setupSharedMemory();
 void setupProgram();
+
+void waitSetupComplete();
+void waitFIFO(const char* path, int* data);
 void setupMessageQueue();
 
 void executeProgram(const char *program, char *const args[]) {
@@ -46,30 +52,6 @@ void setupSharedMemory()
 
     // Configure size of the shared memory object
     shmObj.truncate(MINI_PROJECT_SHM_SIZE);
-
-    // Write into shared memory
-    UnorderedMapShm mapShm(shmObj,MINI_PROJECT_SHM_SIZE,O_CREAT | O_RDWR);
-    mapShm.write((char*)"TEST_SETUP",100);
-    mapShm.write((char*)"TEST_SETUP_1",101);
-    mapShm.write((char*)"TEST_SETUP_2",102);
-
-    // Read
-    int testValue, testValue_1, testValue_2 = 0; 
-    mapShm.read((char*)"TEST_SETUP", &testValue);
-    std::cout<<"Test setup = "<<  testValue << std::endl;
-    mapShm.read((char*)"TEST_SETUP_1", &testValue_1);
-    std::cout<<"Test setup 1 = "<<  testValue_1 << std::endl;
-    mapShm.read((char*)"TEST_SETUP_2", &testValue_2);
-    std::cout<<"Test setup 2 = "<<  testValue_2 << std::endl;
-
-    mapShm.write((char*)"TEST_SETUP_2",1002);
-    mapShm.read((char*)"TEST_SETUP_2", &testValue_2);
-
-    mapShm.remove((char*)"TEST_SETUP_2");
-    if (!mapShm.read((char*)"TEST_SETUP_2",&testValue_2)) {
-        std::cout << "Not found TEST_SETUP_2" << std::endl;
-    }
-    std::cout<<"Update Test setup 2 = "<<  testValue_2 << std::endl;
 }
 
 void setupProgram()
@@ -80,16 +62,93 @@ void setupProgram()
     //* Execute programs*//
     // Execute the communication program
     executeProgram(communcation_program, NULL);
+    // Wait com FIFO
+    waitFIFO(MP_COM_FIFO_PATH, &comPID);
     
-    // Execute the log program
+    // // Execute the log program
     executeProgram(log_program, NULL);
+    // Wait log FIFO
+    waitFIFO(MP_LOG_FIFO_PATH, &logPID);
 
     // Execute the sensor program
     executeProgram(sensor_program, NULL);
+    // Wait sensor FIFO
+    waitFIFO(MP_SENSOR_FIFO_PATH,&sensorPID);
+
+    // Send signal to sensor process, notify other processes complete write PID to shared memory
+    // Send SIGUSR1 to the target process
+    if (kill(sensorPID, SIGUSR1) == -1) {
+        perror("Failed to send signal");
+        return;
+    } 
+
+    printf("Sent SIGUSR1 to process %d\n", sensorPID);
 }
 
 void setupMessageQueue()
 {
+
+}
+
+void waitFIFO(const char* path, int* data)
+{
+    int fd = open(path, O_RDONLY | O_NONBLOCK);
+    if (fd == -1) {
+        std::cerr << "Failed to open FIFO for reading: " << strerror(errno) << std::endl;
+        return;
+    }
+
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(fd, &readfds);
+
+    struct timeval timeout;
+    timeout.tv_sec = 10;  // Wait for 5 seconds
+    timeout.tv_usec = 0;
+
+    std::cout << "Waiting for data in FIFO for up to 5 seconds..."<<path << std::endl;
+    int retval = select(fd + 1, &readfds, NULL, NULL, &timeout);
+    if (retval == -1) {
+        std::cerr << "select() failed: " << strerror(errno) << std::endl;
+        close(fd);
+        return;
+    } else if (retval == 0) {
+        std::cout << "No data within the timeout period."<< path << std::endl;
+    } else {
+        if (FD_ISSET(fd, &readfds)) {
+            // std::cout << "Data is available in FIFO." << std::endl;
+            ssize_t bytesRead = read(fd, data, sizeof(*data));
+            if (bytesRead == sizeof(*data)) {
+                std::cout << "Read PID "<< path <<" "<< *data << " from FIFO." << std::endl;
+            } else {
+                std::cerr << "Failed to read from FIFO: " << strerror(errno) << std::endl;
+            }
+        }
+    }
+
+    close(fd);
+
+}
+
+void waitSetupComplete() 
+{
+    // Wait com FIFO
+    waitFIFO(MP_COM_FIFO_PATH, &comPID);
+
+    // Wait log FIFO
+    waitFIFO(MP_LOG_FIFO_PATH, &logPID);
+
+    // Wait sensor FIFO
+    waitFIFO(MP_SENSOR_FIFO_PATH,&sensorPID);
+    
+
+    // Send signal to sensor process, notify other processes complete write PID to shared memory
+    // Send SIGUSR1 to the target process
+    printf("Sent SIGUSR1 to process %d\n", sensorPID);
+    if (kill(sensorPID, SIGUSR1) == -1) {
+        perror("Failed to send signal");
+        return;
+    } 
 
 }
 
@@ -103,6 +162,9 @@ int main() {
 
     // Setup Program
     setupProgram();
+
+    // Wait other programs of project completed
+    // waitSetupComplete();
 
     std::cout <<"Complete setup"<<std::endl;
     return 0;

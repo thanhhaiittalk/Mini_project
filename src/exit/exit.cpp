@@ -31,7 +31,7 @@ int main()
     std::cout << "COMMUNICATION_PID  = " << comPID << std::endl;
     if (kill(comPID, SIGKILL) == 0)
     {
-      std::cout << "Successfully killed the process with PID " << logPID << std::endl;
+      std::cout << "Successfully killed the process with PID " << comPID << std::endl;
     }
     else
     {
