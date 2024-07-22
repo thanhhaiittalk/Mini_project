@@ -15,9 +15,7 @@ UnorderedMapShm::UnorderedMapShm(const MPSharedMemoryObject shmObject, int size,
 
     // Intialize Write pointer and semaphore in first creating shared memory
     HashEntryType *entries = static_cast<HashEntryType *>(shmPtr) + sizeof(sem_t);
-    std::cout << "UnorderedMapShm: entries[0].key = " << entries[0].key << std::endl;
     if (strcmp(entries[0].key,WRITE_PTR) != 0) {
-        std::cout <<"Debug: Need to create Write ptr" << std::endl;
         writePtr = 0;
         strcpy(entries[0].key, WRITE_PTR);
         entries[0].value = 0;
@@ -28,7 +26,6 @@ UnorderedMapShm::UnorderedMapShm(const MPSharedMemoryObject shmObject, int size,
             std::cerr << "Failed to initialize semaphore" << std::endl;
         }
     }
-    std::cout << "UnorderedMapShm complete" << std::endl;
 }
 
 // Destructor
@@ -39,10 +36,8 @@ UnorderedMapShm::~UnorderedMapShm() {
 
 // Template method for writing to the unordered map
 void UnorderedMapShm::write(char *key, int value) {
-    std::cout <<"UnorderedMapShm: Start write "<< key <<" "<< value << std::endl;
     sem_wait(sem);
 
-    std::cout <<"UnorderedMapShm: Wait sem"<<std::endl;
     read(WRITE_PTR, &writePtr);
     
     // Initialize the hash table in shared memory
@@ -59,7 +54,6 @@ void UnorderedMapShm::write(char *key, int value) {
         {
             throw std::runtime_error("sem_post failed");
         }
-        std::cout << "UnorderedMapShm: Wait complete" << std::endl;
         return;
     }
     
@@ -85,7 +79,6 @@ void UnorderedMapShm::write(char *key, int value) {
     if (sem_post(sem) == -1) {
         throw std::runtime_error("sem_post failed");
     }
-    std::cout <<"UnorderedMapShm: Wait complete"<<std::endl;
 }
 
 // Template method for reading from the unordered map
