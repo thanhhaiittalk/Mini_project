@@ -5,13 +5,24 @@
 #include "unordered_map_shm.hpp"
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <signal.h>
+
+MPSharedMemoryObject shmObj(MINI_PROJECT_SHM_NAME, O_CREAT | O_RDWR, 0666);
+UnorderedMapShm mapShm(shmObj, MINI_PROJECT_SHM_SIZE, O_CREAT | O_RDWR);
+
+// Signal handler function
+void handle_sigusr1(int sig) {
+  int sensorData;
+  std::cout << "Received SIGUSR1 signal\n";
+  mapShm.read("SENSOR_DATA", &sensorData);
+  std::cout << "LOG: SENSOR_DATA = " << sensorData << std::endl;
+}
 
 int main()
 {
   int test = 0;
   std::cout << "Hello, log! " << getpid() << std::endl;
-  MPSharedMemoryObject shmObj(MINI_PROJECT_SHM_NAME, O_CREAT | O_RDWR, 0666);
-  UnorderedMapShm mapShm(shmObj, MINI_PROJECT_SHM_SIZE, O_CREAT | O_RDWR);
+  
   mapShm.write((char*)"LOG_PID", getpid());
 
   // Write to FIFO PID to inform completed write PID in shared memory
@@ -27,6 +38,20 @@ int main()
   std::cout << "log: Write log PID " << logPID << " to FIFO." << std::endl;
   write(fd, &logPID, sizeof(logPID));
   close(fd);
+
+  struct sigaction sa;
+
+  // Set up the sigaction structure to specify the signal handler
+  sa.sa_handler = handle_sigusr1;
+  sa.sa_flags = 0;          // No special flags
+  sigemptyset(&sa.sa_mask); // Block no signals during the execution of the handler
+
+  // Register the signal handler for SIGUSR1
+  if (sigaction(SIGUSR1, &sa, nullptr) == -1)
+  {
+    std::cerr << "Unable to catch SIGUSR1\n";
+    return EXIT_FAILURE;
+  }
   while (1)
   {
     sleep(2);
