@@ -11,50 +11,17 @@
 #include "mp_shared_memory_object.hpp"
 #include "unordered_map_shm.hpp"
 
-// Public variable
-int sensorPID, comPID, logPID;
-
-void executeProgram(const char *program, char *const args[]);
-void setupSharedMemory();
-void setupProgram();
-
-void waitSetupComplete();
-void waitFIFO(const char* path, int* data);
-void setupMessageQueue();
-
-void executeProgram(const char *program, char *const args[]) {
-    pid_t pid = fork();
-    
-    if (pid < 0) {
-        std::cerr << "Fork failed" << std::endl;
-        exit(1);
-    } else if (pid == 0) {
-        // In child process
-        if (execv(program, args) < 0) {
-            std::cerr << "Exec failed" << std::endl;
-            exit(1);
-        }
-    } else {
-        // In parent process, wait for the child to complete
-        // int status;
-        // waitpid(pid, &status, 0);
-    }
-}
-
-void setupSharedMemory()
+MpSetup::MpSetup()
 {
-    
-    // Remove any same name shared memory
-    MPSharedMemoryObject::remove(MINI_PROJECT_SHM_NAME);
-
-    // Create shared memory object
-    MPSharedMemoryObject shmObj(MINI_PROJECT_SHM_NAME, O_CREAT | O_RDWR, 0666);
-
-    // Configure size of the shared memory object
-    shmObj.truncate(MINI_PROJECT_SHM_SIZE);
+    std::cout<<"This is setup"<<std::endl;
 }
 
-void setupProgram()
+MpSetup::~MpSetup()
+{
+    std::cout <<"Complete setup"<<std::endl;
+}
+
+void MpSetup::setupProgram()
 {
     const char *communcation_program = MINI_PROJECT_COMMUNICATION_PROGRAM_PATH;
     const char *log_program = MINI_PROJECT_LOG_PROGRAM_PATH;
@@ -82,16 +49,58 @@ void setupProgram()
         return;
     } 
 
-    printf("Sent SIGUSR1 to process %d\n", sensorPID);
+    std::cout<<"Sent SIGUSR1 to process "<<sensorPID<<std::endl;
 }
 
-void setupMessageQueue()
+void MpSetup::setupSharedMemory()
 {
+    // Remove any same name shared memory
+    MPSharedMemoryObject::remove(MINI_PROJECT_SHM_NAME);
 
+    // Create shared memory object
+    MPSharedMemoryObject shmObj(MINI_PROJECT_SHM_NAME, O_CREAT | O_RDWR, 0666);
+
+    // Configure size of the shared memory object
+    shmObj.truncate(MINI_PROJECT_SHM_SIZE);
 }
 
-void waitFIFO(const char* path, int* data)
+void MpSetup::operate()
 {
+    // Setup Shared memory
+    setupSharedMemory();
+
+    //Setup Program
+    setupProgram();
+}
+
+void MpSetup::executeProgram(const char *program, char *const args[])
+{
+    pid_t pid = fork();
+    
+    if (pid < 0) {
+        std::cerr << "Fork failed" << std::endl;
+        exit(1);
+    } else if (pid == 0) {
+        // In child process
+        if (execv(program, args) < 0) {
+            std::cerr << "Exec failed" << std::endl;
+            exit(1);
+        }
+    } else {
+        // In parent process, wait for the child to complete
+        // int status;
+        // waitpid(pid, &status, 0);
+    }
+}
+
+void MpSetup::waitFIFO(const char *path, int *data)
+{
+    // Poll until the FIFO is created
+    while (access(path, F_OK) == -1) {
+        // Sleep for a short amount of time to avoid busy-waiting
+        usleep(100000); // Sleep for 100ms
+    }
+
     int fd = open(path, O_RDONLY | O_NONBLOCK);
     if (fd == -1) {
         std::cerr << "Failed to open FIFO for reading: " << strerror(errno) << std::endl;
@@ -127,45 +136,4 @@ void waitFIFO(const char* path, int* data)
     }
 
     close(fd);
-
-}
-
-void waitSetupComplete() 
-{
-    // Wait com FIFO
-    waitFIFO(MP_COM_FIFO_PATH, &comPID);
-
-    // Wait log FIFO
-    waitFIFO(MP_LOG_FIFO_PATH, &logPID);
-
-    // Wait sensor FIFO
-    waitFIFO(MP_SENSOR_FIFO_PATH,&sensorPID);
-    
-
-    // Send signal to sensor process, notify other processes complete write PID to shared memory
-    // Send SIGUSR1 to the target process
-    printf("Sent SIGUSR1 to process %d\n", sensorPID);
-    if (kill(sensorPID, SIGUSR1) == -1) {
-        perror("Failed to send signal");
-        return;
-    } 
-
-}
-
-int main() {
-    std::cout<<"This is setup"<<std::endl;
-    // Setup Shared memory
-    setupSharedMemory();
-
-    // Setup Message queue
-    setupMessageQueue();
-
-    // Setup Program
-    setupProgram();
-
-    // Wait other programs of project completed
-    // waitSetupComplete();
-
-    std::cout <<"Complete setup"<<std::endl;
-    return 0;
 }

@@ -15,4 +15,25 @@
 #define MP_COM_FIFO_PATH "/tmp/com_fifo"
 #define MP_LOG_FIFO_PATH "/tmp/log_fifo"
 
+class MpSetup {
+public:
+    // Public variable
+    int sensorPID, comPID, logPID;
+        
+    //Constructor
+    MpSetup();
+
+    //Desctrucotr
+    ~MpSetup();
+
+    void setupProgram();
+    void setupSharedMemory();
+    void operate();    
+
+private:
+    void executeProgram(const char *program, char *const args[]);
+    void waitFIFO(const char* path, int* data);
+
+};
+
 #endif // SETUP_HPP
