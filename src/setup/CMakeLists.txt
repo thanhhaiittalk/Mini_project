@@ -1,5 +1,6 @@
 # Add the source files in this directory
 set(SRC_FILES
+    main_setup.cpp
     setup.cpp
     setup.hpp
 )

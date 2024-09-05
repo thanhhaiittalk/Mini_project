@@ -52,7 +52,7 @@ int main()
     }
   }
   // Kill the process with the specified PID
-
+  
   shmObj.remove(MINI_PROJECT_SHM_NAME);
   std::cout << "Delete shared memory " << MINI_PROJECT_SHM_NAME << std::endl;
   return 0;
